@@ -6,7 +6,7 @@
 /*   By: seolee <seolee@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/11 16:12:18 by seolee            #+#    #+#             */
-/*   Updated: 2024/11/16 16:45:18 by seolee           ###   ########.fr       */
+/*   Updated: 2024/11/20 16:41:38 by seolee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,22 +35,24 @@ char	*ft_strjoin(char const *s1, char const *s2, size_t len)
 {
 	size_t	i;
 	size_t	j;
+	size_t 	k;
 	char	*join;
 
 	if (!s1 || !s2)
 		return (NULL);
-	i = ft_strlen(s1);
+	while (s1[i])
+		i++;
 	j = len;
+	while (s2[k])
+		k++;
+	if (k < len)
+		j = k;
 	join = (char *)malloc(i + j + 1);
 	if (join == NULL)
 		return (NULL);
 	ft_memcpy(join, s1, i);
 	ft_memcpy(join + i, s2, j);
 	join[i + j] = '\0';
-	// write(1, "test\n", 5);
-	// write(1, join, i);
-	// write(1, join + i, j);
-	// write(1, "test end\n", 9);
 	return (join);
 }
 size_t	ft_strlen(const char *str)

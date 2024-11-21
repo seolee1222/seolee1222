@@ -6,70 +6,62 @@
 /*   By: seolee <seolee@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 16:09:47 by seolee            #+#    #+#             */
-/*   Updated: 2024/11/16 18:44:05 by seolee           ###   ########.fr       */
+/*   Updated: 2024/11/21 16:45:04 by seolee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <stdio.h>
-#include <fcntl.h>
 
-void ptrmove(char *buffer, char *newline);
-
-char *get_next_line(int fd)
+void	ptrmove(char *buffer, char *newline, ssize_t byte)
 {
-	static char buffer[BUFFER_SIZE + 1];
-	ssize_t	byte;
-	char *newline;
-	char *stline;
-	char *temp;
-	
-	stline = ft_strdup("");
-	if (fd <= 0 || BUFFER_SIZE <= 0)
-		return (NULL);
-	newline = ft_strchr(buffer, '\n');
-	while (!newline)
-	{
-		byte = read(fd, buffer, BUFFER_SIZE);
-		if (byte < 0)
-		{
-			free (stline);
-			return(NULL);
-		}
-		if (byte == 0)
-		{
-			if (stline[0] == '\0')
-			{
-				free(stline);
-				return (NULL);
-			}
-			return(stline);
-		}
-		newline = ft_strchr(buffer, '\n');
-		if (!newline)
-		{
-			buffer[byte] = '\0';
-			stline = ft_strjoin(stline, buffer, byte); 
-		}
-		//printf("testtest: %s", stline);
-		//printf("\n");
-	}
-	buffer[byte] = '\0';
+	byte = byte - ((newline - buffer) + 1);
+	if (byte > 0)
+		ft_memmove(buffer, newline + 1, byte);
+	buffer[byte] = 0;
+}
+
+char	*update_stline(char *stline, char *buffer, ssize_t byte)
+{
+	char	*temp;
+
 	temp = stline;
-	stline = ft_strjoin(stline, buffer, (newline - buffer) + 1);
-	ptrmove(buffer, newline);
-	free(temp);
+	stline = ft_strjoin(stline, buffer, byte);
+	if (!stline)
+	{
+		free (temp);
+		return (NULL);
+	}
+	free (temp);
 	return (stline);
 }
 
-void ptrmove(char *buffer, char *newline)
+char	*get_next_line(int fd)
 {
-	ssize_t mv;
+	static char		buffer[BUFFER_SIZE + 1];
+	static ssize_t	byte;
+	char			*newline;
+	char			*stline;
 
-	mv = BUFFER_SIZE - ((newline - buffer ) + 1);
-	ft_memmove(buffer, newline + 1, mv);
-	buffer[mv] = '\0';
-}
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	stline = ft_strdup("");
+	newline = ft_strchr(buffer, '\n');
+	while (!newline)
+	{	
+		if (!newline)
+        		stline = update_stline(stline, buffer, byte);
+    		byte = read(fd, buffer, BUFFER_SIZE);
+    		if (byte < 0 || (byte == 0 && (!stline || stline[0] == '\0')))
+        		return (free(stline), NULL);
+    		buffer[byte] = '\0';
+    		if (byte == 0)
+        		return (stline);
+		newline = ft_strchr(buffer, '\n');
+	}
+	stline = update_stline(stline, buffer, (newline - buffer) + 1);
+	return (ptrmove(buffer, newline, byte), stline);
+}	
+
 int main(int argc, char **argv)
 {
 	int fd;
@@ -85,9 +77,6 @@ int main(int argc, char **argv)
 	{
 		printf("%s", line);
 		free(line);
+
 	}
 }
-
-
-// 1. \n을 포함한 한 문장을 return 해야함
-// 2. 출력은 main에서 알아서 처리해줌
